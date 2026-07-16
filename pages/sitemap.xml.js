@@ -59,6 +59,16 @@ function generateLocalesSitemap(link, allPages, locale) {
       loc: buildSitemapLoc({
         baseUrl: normalizedLink,
         locale: normalizedLocale,
+        slug: 'about'
+      }),
+      lastmod: dateNow,
+      changefreq: 'weekly',
+      priority: '0.9'
+    },
+    {
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
         slug: 'archive'
       }),
       lastmod: dateNow,
@@ -112,6 +122,18 @@ function generateLocalesSitemap(link, allPages, locale) {
       ?.filter(p => p.status === BLOG.NOTION_PROPERTY_NAME.status_publish)
       // 过滤掉外部链接(http开头)和锚点链接(#开头)
       ?.filter(p => p.slug && !p.slug.startsWith('http') && !p.slug.startsWith('#'))
+      // 过滤空格/异常 slug，避免 sitemap 含坏链降低抓取质量
+      ?.filter(p => {
+        const s = String(p.slug || '')
+        if (/\s/.test(s)) return false
+        if (s.includes('//')) return false
+        return true
+      })
+      // Menu/SubMenu/Config/Notice 不必进 sitemap
+      ?.filter(p => {
+        const t = String(p.type || '').toLowerCase()
+        return !['menu', 'submenu', 'config', 'notice'].includes(t)
+      })
       ?.map(post => {
         const loc = buildSitemapLoc({
           baseUrl: normalizedLink,

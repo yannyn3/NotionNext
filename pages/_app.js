@@ -16,6 +16,7 @@ import ErrorHandler from '@/lib/utils/errorHandler'
 
 // 各种扩展插件 这个要阻塞引入
 import BLOG from '@/blog.config'
+import CrawlableFallback from '@/components/CrawlableFallback'
 import ExternalPlugins from '@/components/ExternalPlugins'
 import SEO from '@/components/SEO'
 import { zhCN } from '@clerk/localizations'
@@ -82,11 +83,14 @@ const MyApp = ({ Component, pageProps }) => {
   )
 
   const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  // SEO / CrawlableFallback 放在主题 Layout 之外：
+  // 即使主题动态加载失败，title/meta 与可抓取正文摘要仍会出现在 SSR HTML 中
   const content = (
     <AppErrorBoundary>
       <GlobalContextProvider {...pageProps}>
+        <SEO {...pageProps} />
+        <CrawlableFallback {...pageProps} />
         <GLayout {...pageProps}>
-          <SEO {...pageProps} />
           <Component {...pageProps} />
         </GLayout>
         <ExternalPlugins {...pageProps} />

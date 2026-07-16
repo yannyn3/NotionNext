@@ -73,7 +73,7 @@ const preBuild = (function () {
   ) {
     return
   }
-  // 删除 public/sitemap.xml 文件 ； 否则会和/pages/sitemap.xml.js 冲突。
+  // 删除 public/sitemap.xml / robots.txt ； 否则会和 pages 动态路由冲突。
   if (process.env.NEXT_PRIVATE_BUILD_WORKER) {
     return
   }
@@ -81,6 +81,11 @@ const preBuild = (function () {
   if (fs.existsSync(sitemapPath)) {
     fs.unlinkSync(sitemapPath)
     console.log('Deleted existing sitemap.xml from public directory')
+  }
+  const robotsPath = path.resolve(__dirname, 'public', 'robots.txt')
+  if (fs.existsSync(robotsPath)) {
+    fs.unlinkSync(robotsPath)
+    console.log('Deleted existing robots.txt from public directory')
   }
 
   const sitemap2Path = path.resolve(__dirname, 'sitemap.xml')

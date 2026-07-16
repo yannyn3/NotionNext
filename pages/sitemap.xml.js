@@ -59,6 +59,16 @@ function generateLocalesSitemap(link, allPages, locale) {
       loc: buildSitemapLoc({
         baseUrl: normalizedLink,
         locale: normalizedLocale,
+        slug: 'about'
+      }),
+      lastmod: dateNow,
+      changefreq: 'weekly',
+      priority: '0.9'
+    },
+    {
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
         slug: 'archive'
       }),
       lastmod: dateNow,

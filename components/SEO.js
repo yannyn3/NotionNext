@@ -2,6 +2,7 @@ import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { createSiteUrl, normalizeSiteUrl } from '@/lib/sitemap-utils'
 import { isHttpLink, loadExternalResource } from '@/lib/utils'
+import { generateLocaleDict } from '@/lib/utils/lang'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
@@ -21,7 +22,13 @@ const SEO = props => {
   let url = PATH?.length ? createSiteUrl(LINK, SUB_PATH) || LINK : LINK
   let image
   const router = useRouter()
-  const meta = getSEOMeta(props, router, useGlobal()?.locale)
+  // locale 兜底：避免主题/上下文异常时 SEO 在 SSR 阶段抛错导致 head 整段丢失
+  const globalLocale = useGlobal()?.locale
+  const meta = getSEOMeta(
+    props,
+    router,
+    globalLocale || generateLocaleDict(siteConfig('LANG', 'zh-CN', NOTION_CONFIG))
+  )
   const webFontUrl = siteConfig('FONT_URL')
   const hasWebFontUrl = Array.isArray(webFontUrl)
     ? webFontUrl.filter(Boolean).length > 0
@@ -115,7 +122,14 @@ const SEO = props => {
   const TWITTER_SITE = siteConfig('TWITTER_SITE', '', NOTION_CONFIG)
   const TWITTER_CREATOR = siteConfig('TWITTER_CREATOR', '', NOTION_CONFIG)
 
-  const AUTHOR = siteConfig('AUTHOR')
+  const AUTHOR = siteConfig('AUTHOR', 'YANG 易', NOTION_CONFIG)
+  const BIO = siteConfig('BIO', '', NOTION_CONFIG)
+  // 站点描述过短时补充实体信息，便于 AI/搜索理解「YANG 易」
+  const enrichedDescription =
+    description && String(description).trim().length >= 12
+      ? description
+      : `${AUTHOR}${BIO ? `，${BIO}` : ''}。个人博客 ${LINK}。内容创作、AI 学习与思考笔记。`
+
   return (
     <Head>
       <link rel='icon' href={favicon} />
@@ -150,7 +164,7 @@ const SEO = props => {
       {/* 基础SEO元数据 */}
       <link rel='canonical' href={url} />
       <meta name='keywords' content={keywords} />
-      <meta name='description' content={description} />
+      <meta name='description' content={enrichedDescription} />
       <meta name='author' content={AUTHOR} />
       <meta name='generator' content='NotionNext' />
 
@@ -161,7 +175,7 @@ const SEO = props => {
       {/* Open Graph 元数据 */}
       <meta property='og:locale' content={lang} />
       <meta property='og:title' content={title} />
-      <meta property='og:description' content={description} />
+      <meta property='og:description' content={enrichedDescription} />
       <meta property='og:url' content={url} />
       <meta property='og:image' content={image} />
       <meta property='og:image:width' content='1200' />
@@ -177,7 +191,7 @@ const SEO = props => {
         <meta name='twitter:creator' content={TWITTER_CREATOR} />
       )}
       <meta name='twitter:title' content={title} />
-      <meta name='twitter:description' content={description} />
+      <meta name='twitter:description' content={enrichedDescription} />
       <meta name='twitter:image' content={image} />
       <meta name='twitter:image:alt' content={title} />
 
@@ -223,12 +237,34 @@ const SEO = props => {
         </>
       )}
 
-      {/* 结构化数据 */}
+      {/* 结构化数据：WebSite/BlogPosting + Person 实体 */}
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
-            generateStructuredData(meta, siteInfo, url, image, AUTHOR, LINK)
+            generateStructuredData(
+              meta,
+              siteInfo,
+              url,
+              image,
+              AUTHOR,
+              LINK,
+              BIO
+            )
+          )
+        }}
+      />
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            generatePersonStructuredData({
+              author: AUTHOR,
+              bio: BIO,
+              siteUrl: LINK,
+              siteTitle: siteInfo?.title,
+              image: getAbsoluteImageUrl(siteInfo?.icon, LINK)
+            })
           )
         }}
       />
@@ -251,6 +287,33 @@ const SEO = props => {
 }
 
 /**
+ * 人物实体结构化数据 — 强化「YANG 易 / yannyi.com」可被 AI 对齐
+ */
+export const generatePersonStructuredData = ({
+  author,
+  bio,
+  siteUrl,
+  siteTitle,
+  image
+}) => {
+  const name = author || 'YANG 易'
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name,
+    alternateName: ['YANG易', 'YANG 易', 'yannyi', 'YANNYI'],
+    url: siteUrl,
+    image: image || undefined,
+    jobTitle: bio || '内容创作者',
+    description:
+      bio ||
+      `${name}，个人博客 ${siteTitle || siteUrl} 作者，关注 AI、写作与个人成长。`,
+    mainEntityOfPage: siteUrl ? `${siteUrl.replace(/\/$/, '')}/about` : undefined,
+    sameAs: siteUrl ? [siteUrl] : []
+  }
+}
+
+/**
  * 生成结构化数据
  * @param {*} meta
  * @param {*} siteInfo
@@ -265,18 +328,24 @@ export const generateStructuredData = (
   url,
   image,
   author,
-  siteUrl
+  siteUrl,
+  bio = ''
 ) => {
+  const person = {
+    '@type': 'Person',
+    name: author,
+    alternateName: ['YANG易', 'YANG 易', 'yannyi'],
+    url: siteUrl,
+    description: bio || undefined
+  }
+
   const baseData = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: siteInfo?.title,
     description: siteInfo?.description,
     url: siteUrl,
-    author: {
-      '@type': 'Person',
-      name: author
-    },
+    author: person,
     publisher: {
       '@type': 'Organization',
       name: siteInfo?.title,
@@ -284,6 +353,11 @@ export const generateStructuredData = (
         '@type': 'ImageObject',
         url: getAbsoluteImageUrl(siteInfo?.icon, siteUrl)
       }
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl?.replace(/\/$/, '')}/search?s={search_term_string}`,
+      'query-input': 'required name=search_term_string'
     }
   }
 
@@ -298,10 +372,7 @@ export const generateStructuredData = (
       url: url,
       datePublished: meta.publishTime,
       dateModified: meta.modifiedTime || meta.publishTime,
-      author: {
-        '@type': 'Person',
-        name: author
-      },
+      author: person,
       publisher: {
         '@type': 'Organization',
         name: siteInfo?.title,
@@ -316,6 +387,23 @@ export const generateStructuredData = (
       },
       keywords: meta.tags?.join(', '),
       articleSection: meta.category
+    }
+  }
+
+  // About 页使用 ProfilePage
+  if (meta?.type === 'ProfilePage') {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ProfilePage',
+      name: meta.title,
+      description: meta.description,
+      url,
+      mainEntity: person,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: siteInfo?.title,
+        url: siteUrl
+      }
     }
   }
 
@@ -351,20 +439,36 @@ const getIsoTime = value => {
 const getSEOMeta = (props, router, locale) => {
   const { post, siteInfo, tag, category, page } = props
   const keyword = router?.query?.s
+  const safeLocale = locale || generateLocaleDict('zh-CN')
+  const nav = safeLocale.NAV || {}
+  const common = safeLocale.COMMON || {}
 
   const TITLE = siteConfig('TITLE')
+  const AUTHOR = siteConfig('AUTHOR', 'YANG 易')
+  const BIO = siteConfig('BIO', '')
   switch (router.route) {
     case '/':
       return {
         title: `${siteInfo?.title} | ${siteInfo?.description}`,
-        description: `${siteInfo?.description}`,
+        description:
+          siteInfo?.description && String(siteInfo.description).trim().length >= 12
+            ? siteInfo.description
+            : `${AUTHOR}${BIO ? `，${BIO}` : ''}的个人博客。官方网站 yannyi.com。`,
         image: `${siteInfo?.pageCover}`,
         slug: '',
         type: 'website'
       }
+    case '/about':
+      return {
+        title: `关于 ${AUTHOR} | ${siteInfo?.title || TITLE}`,
+        description: `${AUTHOR}${BIO ? `，${BIO}` : ''}。官方博客 yannyi.com，内容创作、AI 学习与个人成长。`,
+        image: `${siteInfo?.pageCover}`,
+        slug: 'about',
+        type: 'ProfilePage'
+      }
     case '/archive':
       return {
-        title: `${locale.NAV.ARCHIVE} | ${siteInfo?.title}`,
+        title: `${nav.ARCHIVE || 'Archive'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         image: `${siteInfo?.pageCover}`,
         slug: 'archive',
@@ -380,7 +484,7 @@ const getSEOMeta = (props, router, locale) => {
       }
     case '/category/[category]':
       return {
-        title: `${category} | ${locale.COMMON.CATEGORY} | ${siteInfo?.title}`,
+        title: `${category} | ${common.CATEGORY || 'Category'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         slug: 'category/' + category,
         image: `${siteInfo?.pageCover}`,
@@ -388,7 +492,7 @@ const getSEOMeta = (props, router, locale) => {
       }
     case '/category/[category]/page/[page]':
       return {
-        title: `${category} | ${locale.COMMON.CATEGORY} | ${siteInfo?.title}`,
+        title: `${category} | ${common.CATEGORY || 'Category'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         slug: 'category/' + category,
         image: `${siteInfo?.pageCover}`,
@@ -397,7 +501,7 @@ const getSEOMeta = (props, router, locale) => {
     case '/tag/[tag]':
     case '/tag/[tag]/page/[page]':
       return {
-        title: `${tag} | ${locale.COMMON.TAGS} | ${siteInfo?.title}`,
+        title: `${tag} | ${common.TAGS || 'Tags'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         image: `${siteInfo?.pageCover}`,
         slug: 'tag/' + tag,
@@ -405,7 +509,7 @@ const getSEOMeta = (props, router, locale) => {
       }
     case '/search':
       return {
-        title: `${keyword || ''}${keyword ? ' | ' : ''}${locale.NAV.SEARCH} | ${siteInfo?.title}`,
+        title: `${keyword || ''}${keyword ? ' | ' : ''}${nav.SEARCH || 'Search'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         image: `${siteInfo?.pageCover}`,
         slug: 'search',
@@ -414,7 +518,7 @@ const getSEOMeta = (props, router, locale) => {
     case '/search/[keyword]':
     case '/search/[keyword]/page/[page]':
       return {
-        title: `${keyword || ''}${keyword ? ' | ' : ''}${locale.NAV.SEARCH} | ${siteInfo?.title}`,
+        title: `${keyword || ''}${keyword ? ' | ' : ''}${nav.SEARCH || 'Search'} | ${siteInfo?.title}`,
         description: TITLE,
         image: `${siteInfo?.pageCover}`,
         slug: 'search/' + (keyword || ''),
@@ -422,12 +526,12 @@ const getSEOMeta = (props, router, locale) => {
       }
     case '/404':
       return {
-        title: `${siteInfo?.title} | ${locale.NAV.PAGE_NOT_FOUND}`,
+        title: `${siteInfo?.title} | ${nav.PAGE_NOT_FOUND || 'Not Found'}`,
         image: `${siteInfo?.pageCover}`
       }
     case '/tag':
       return {
-        title: `${locale.COMMON.TAGS} | ${siteInfo?.title}`,
+        title: `${common.TAGS || 'Tags'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         image: `${siteInfo?.pageCover}`,
         slug: 'tag',
@@ -435,7 +539,7 @@ const getSEOMeta = (props, router, locale) => {
       }
     case '/category':
       return {
-        title: `${locale.COMMON.CATEGORY} | ${siteInfo?.title}`,
+        title: `${common.CATEGORY || 'Category'} | ${siteInfo?.title}`,
         description: `${siteInfo?.description}`,
         image: `${siteInfo?.pageCover}`,
         slug: 'category',

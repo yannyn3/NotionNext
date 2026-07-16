@@ -549,11 +549,18 @@ const getSEOMeta = (props, router, locale) => {
       const category = Array.isArray(post?.category)
         ? post?.category?.[0]
         : post?.category
+      const authorName = siteConfig('AUTHOR', 'YANG 易')
+      // 文章缺 summary 时不要回退到泛站点 slogan，改用「标题+作者」便于 SEO/GEO
+      const postDescription =
+        (post?.summary && String(post.summary).trim()) ||
+        (post?.title
+          ? `${post.title}｜${authorName}（yannyi.com）`
+          : siteInfo?.description)
       return {
         title: post
           ? `${post?.title} | ${siteInfo?.title}`
           : `${siteInfo?.title} | loading`,
-        description: post?.summary,
+        description: postDescription,
         type: post?.type,
         slug: post?.slug,
         image: post?.pageCoverThumbnail || `${siteInfo?.pageCover}`,

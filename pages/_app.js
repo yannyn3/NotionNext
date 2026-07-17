@@ -32,6 +32,10 @@ const AppErrorBoundary = ErrorHandler.createErrorBoundary(
     <button onClick={() => window.location.reload()} style={{ padding: '0.5rem 1.5rem', cursor: 'pointer', border: '1px solid #ccc', borderRadius: '4px', background: 'transparent' }}>Refresh</button>
   </div>
 )
+// 主题层单独兜底：主题/Notion 渲染失败时不影响 SEO 与爬虫正文
+const ThemeErrorBoundary = ErrorHandler.createErrorBoundary(
+  <div id='theme-ssr-fallback' style={{ minHeight: '40vh' }} />
+)
 
 /**
  * App挂载DOM 入口文件
@@ -83,16 +87,18 @@ const MyApp = ({ Component, pageProps }) => {
   )
 
   const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  // SEO / CrawlableFallback 放在主题 Layout 之外：
-  // 即使主题动态加载失败，title/meta 与可抓取正文摘要仍会出现在 SSR HTML 中
+  // SEO + CrawlableFallback 必须在主题 Layout 之外，且主题单独套 ErrorBoundary：
+  // 主题/Notion 渲染崩溃时，title/meta/可抓取正文仍写入 HTML，供 AI/搜索引擎阅读。
   const content = (
     <AppErrorBoundary>
       <GlobalContextProvider {...pageProps}>
         <SEO {...pageProps} />
         <CrawlableFallback {...pageProps} />
-        <GLayout {...pageProps}>
-          <Component {...pageProps} />
-        </GLayout>
+        <ThemeErrorBoundary>
+          <GLayout {...pageProps}>
+            <Component {...pageProps} />
+          </GLayout>
+        </ThemeErrorBoundary>
         <ExternalPlugins {...pageProps} />
       </GlobalContextProvider>
     </AppErrorBoundary>

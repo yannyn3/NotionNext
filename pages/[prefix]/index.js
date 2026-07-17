@@ -126,7 +126,10 @@ Slug.propTypes = {
 export async function getStaticPaths() {
   return getStaticPathsBase({
     from: 'slug-paths',
-    filterFn: row => checkSlugHasNoSlash(row),
+    // about 由 pages/about.js 专用路由处理，避免与动态 [prefix] 抢路由/空壳 SSR
+    filterFn: row =>
+      checkSlugHasNoSlash(row) &&
+      String(row?.slug || '').replace(/^\//, '') !== 'about',
     mapPageToParams: row => ({ params: { prefix: row.slug } })
   })
 }

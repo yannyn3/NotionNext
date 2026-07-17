@@ -197,7 +197,16 @@ export async function getStaticProps({ locale }) {
   if (props.allPages) {
     delete props.allPages
   }
-  props.posts = undefined
+  // 供 CrawlableFallback / SEO 识别为作者实体页
+  props.post = {
+    title: `关于 ${siteConfig('AUTHOR', 'YANG 易', props?.NOTION_CONFIG)}`,
+    slug: 'about',
+    type: 'Page',
+    summary:
+      props?.siteInfo?.description ||
+      'YANG 易（YANG易 / yannyi），内容创作者×AI爱好者，个人博客 yannyi.com 作者介绍。',
+    status: 'Published'
+  }
 
   return {
     props,

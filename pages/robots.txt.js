@@ -47,7 +47,7 @@ Sitemap: ${site}/sitemap.xml
 `
 }
 
-export async function getServerSideProps({ req, res }) {
+export function getServerSideProps({ req, res }) {
   const host = req?.headers?.host || 'yannyi.com'
   const body = buildRobotsTxt(host)
 

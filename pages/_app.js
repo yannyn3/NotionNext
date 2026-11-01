@@ -16,7 +16,6 @@ import ErrorHandler from '@/lib/utils/errorHandler'
 
 // 各种扩展插件 这个要阻塞引入
 import BLOG from '@/blog.config'
-import CrawlableFallback from '@/components/CrawlableFallback'
 import ExternalPlugins from '@/components/ExternalPlugins'
 import PWAInstaller from '@/components/PWAInstaller'
 import SEO from '@/components/SEO'
@@ -60,7 +59,11 @@ const AppErrorBoundary = ErrorHandler.createErrorBoundary(
 )
 // 主题层单独兜底：主题/Notion 渲染失败时不影响 SEO 与爬虫正文
 const ThemeErrorBoundary = ErrorHandler.createErrorBoundary(
-  <div id='theme-ssr-fallback' style={{ minHeight: '40vh' }} />
+  <section id='theme-ssr-fallback' className='mx-auto max-w-xl px-6 py-16'>
+    <h2>页面暂时无法显示</h2>
+    <p>请刷新重试，或从文章归档继续阅读。</p>
+    <a href='/archive'>查看文章归档</a>
+  </section>
 )
 
 /**
@@ -113,13 +116,11 @@ const MyApp = ({ Component, pageProps }) => {
   )
 
   const enableClerk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  // SEO + CrawlableFallback 必须在主题 Layout 之外，且主题单独套 ErrorBoundary：
-  // 主题/Notion 渲染崩溃时，title/meta/可抓取正文仍写入 HTML，供 AI/搜索引擎阅读。
+  // 保留服务端 SEO；内容直接由主题输出，失败时显示可操作的恢复入口。
   const content = (
     <AppErrorBoundary>
       <GlobalContextProvider {...pageProps}>
         <SEO {...pageProps} />
-        <CrawlableFallback {...pageProps} />
         <ThemeErrorBoundary>
           <GLayout {...pageProps}>
             <Component {...pageProps} />

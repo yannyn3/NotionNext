@@ -8,7 +8,11 @@ jest.mock('@/lib/config', () => ({
 jest.mock('@/lib/global', () => ({
   useGlobal: () => ({
     locale: {
-      NAV: { ARCHIVE: 'Archive', SEARCH: 'Search', PAGE_NOT_FOUND: 'Not Found' },
+      NAV: {
+        ARCHIVE: 'Archive',
+        SEARCH: 'Search',
+        PAGE_NOT_FOUND: 'Not Found'
+      },
       COMMON: { CATEGORY: 'Category', TAGS: 'Tags' }
     }
   })
@@ -215,4 +219,29 @@ describe('font config defaults', () => {
 
     expect(fontConfig.FONT_URL).toBe(process.env.NEXT_PUBLIC_FONT_URL)
   })
+})
+
+describe('personal blog metadata', () => {
+  it('keeps the homepage title short instead of appending the whole description', () => {
+    const { container } = renderSeo('')
+    expect(container.querySelector('title').textContent).toBe('Example Blog')
+  })
+  it('links the author to verified public profiles and uses an author page identity', () => {
+    const { generatePersonStructuredData } = require('@/components/SEO')
+    const person = generatePersonStructuredData({
+      author: 'YANG 易',
+      siteUrl: 'https://yannyi.com',
+      sameAs: ['https://github.com/yannyn3']
+    })
+    expect(person['@id']).toBe('https://yannyi.com/#author')
+    expect(person.sameAs).toEqual(['https://github.com/yannyn3'])
+  })
+})
+
+it('serializes JSON-LD without allowing an article title to end the script element', () => {
+  const { serializeStructuredData } = require('@/components/SEO')
+  const data = { headline: '</script><script>unsafe</script>' }
+  const serialized = serializeStructuredData(data)
+  expect(serialized).not.toContain('<')
+  expect(JSON.parse(serialized)).toEqual(data)
 })

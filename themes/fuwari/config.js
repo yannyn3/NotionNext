@@ -25,8 +25,8 @@ const CONFIG = {
   // ---------------------------------------------------------------------------
   /** 是否显示右侧封面图区域 */
   FUWARI_POST_LIST_COVER: true,
-  /** 无文章封面时，是否用站点横幅图（HOME_BANNER_IMAGE）作默认图 */
-  FUWARI_POST_LIST_COVER_DEFAULT: false,
+  /** 缺少封面或图片失效时，是否按文章主题补充站内分类封面 */
+  FUWARI_POST_LIST_COVER_DEFAULT: true,
   /** 封面悬停轻微放大 */
   FUWARI_POST_LIST_COVER_HOVER_ENLARGE: true,
   /** 显示摘要（有 summary 时） */
@@ -86,7 +86,7 @@ const CONFIG = {
   /** 顶栏调色板内的色相滑块等；false 时展开调色板无控件 */
   FUWARI_WIDGET_THEME_COLOR_SWITCHER: true,
   /** 默认品牌色相 0–360 */
-  FUWARI_THEME_COLOR_HUE: 52,
+  FUWARI_THEME_COLOR_HUE: 24,
   /** true：隐藏顶栏调色盘按钮，无法在站内改色相 */
   FUWARI_THEME_COLOR_FIXED: false,
   /** 文章页右侧浮动区：跳转评论区按钮 */

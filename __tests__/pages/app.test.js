@@ -37,7 +37,7 @@ it('keeps the page and upstream PWA installer alongside custom crawlable content
     />
   )
   expect(screen.getByText('Blog page')).toBeInTheDocument()
-  expect(screen.getByText('Crawlable content')).toBeInTheDocument()
+  expect(screen.queryByText('Crawlable content')).not.toBeInTheDocument()
   expect(screen.getByText('PWA enabled')).toBeInTheDocument()
 })
 
@@ -48,8 +48,9 @@ it('retains SEO, crawlable content and plugins when theme content crashes', () =
   }
   render(<MyApp Component={BrokenPage} pageProps={{}} />)
   expect(screen.getByText('SEO metadata')).toBeInTheDocument()
-  expect(screen.getByText('Crawlable content')).toBeInTheDocument()
+  expect(screen.queryByText('Crawlable content')).not.toBeInTheDocument()
   expect(screen.getByText('External plugins')).toBeInTheDocument()
   expect(screen.getByText('PWA disabled')).toBeInTheDocument()
+  expect(screen.getByText('页面暂时无法显示')).toBeInTheDocument()
   expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument()
 })

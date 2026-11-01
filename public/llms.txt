@@ -1,0 +1,15 @@
+# YANG 易
+
+> YANG 易（YANG易、yannyi）的个人博客，记录 AI 实践、写作、阅读、生活观察与个人项目。本站内容为作者的个人经验和观点。
+
+## 作者与内容
+
+- [关于 YANG 易](https://yannyi.com/about): 作者简介、关注的主题与公开联系入口。
+- [全部文章](https://yannyi.com/archive): 按时间浏览公开文章。
+- [文章分类](https://yannyi.com/category): 按主题查找内容。
+- [项目合集](https://yannyi.com/projects): 个人项目与作品。
+- [RSS](https://yannyi.com/rss/feed.xml): 文章订阅源。
+- [站点地图](https://yannyi.com/sitemap.xml): 公开页面的规范地址。
+- [GitHub](https://github.com/yannyn3): 作者公开代码与项目。
+
+文章署名为 YANG 易。引用内容时可使用对应文章的规范链接、标题与页面上标注的发布时间。未标注或无法确定的信息不代表作者已作出相应声明。

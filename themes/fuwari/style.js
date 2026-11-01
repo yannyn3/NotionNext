@@ -1,37 +1,38 @@
 /* eslint-disable react/no-unknown-property */
 import CONFIG from './config'
+import { siteConfig } from '@/lib/config'
 import { themeConsoleStyle } from '@/lib/themeConsoleStyle'
 
 const Style = () => {
   return <style jsx global>{`
     #theme-fuwari {
-      --fuwari-bg: #f3f4f8;
-      --fuwari-bg-soft: #f6f4e8;
-      --fuwari-surface: #ffffff;
-      --fuwari-muted: #72767d;
-      --fuwari-text: #232a37;
-      --fuwari-primary: #b8a320;
+      --fuwari-bg: ${siteConfig('FUWARI_COLOR_BG', '#f7f2ea', CONFIG)};
+      --fuwari-bg-soft: ${siteConfig('FUWARI_COLOR_CARD', '#fdfaf5', CONFIG)};
+      --fuwari-surface: ${siteConfig('FUWARI_COLOR_CARD', '#fdfaf5', CONFIG)};
+      --fuwari-muted: ${siteConfig('FUWARI_COLOR_TEXT_SECONDARY', '#70665f', CONFIG)};
+      --fuwari-text: ${siteConfig('FUWARI_COLOR_TEXT', '#342c27', CONFIG)};
+      --fuwari-primary: ${siteConfig('FUWARI_COLOR_PRIMARY', '#995b3d', CONFIG)};
       --fuwari-primary-soft: rgba(184, 163, 32, 0.14);
-      --fuwari-border: #e9e8df;
+      --fuwari-border: ${siteConfig('FUWARI_COLOR_BORDER', '#e6ddd1', CONFIG)};
       --fuwari-gradient: linear-gradient(135deg, var(--fuwari-primary) 0%, color-mix(in oklab, var(--fuwari-primary) 70%, #ffffff) 100%);
     }
 
     .dark #theme-fuwari {
-      --fuwari-bg: #0d1117;
-      --fuwari-bg-soft: #131a25;
-      --fuwari-surface: #171f2c;
+      --fuwari-bg: #191613;
+      --fuwari-bg-soft: #211c18;
+      --fuwari-surface: #25211d;
       --fuwari-muted: #9ca3af;
       --fuwari-text: #f3f4f6;
       --fuwari-primary: #d3bf53;
       --fuwari-primary-soft: rgba(211, 191, 83, 0.2);
-      --fuwari-border: #283446;
+      --fuwari-border: #443a31;
       --fuwari-gradient: linear-gradient(135deg, var(--fuwari-primary) 0%, color-mix(in oklab, var(--fuwari-primary) 70%, #ffffff) 100%);
     }
 
     #theme-fuwari.fuwari-bg {
       background:
         radial-gradient(circle at 10% -10%, var(--fuwari-primary-soft) 0, transparent 45%),
-        radial-gradient(circle at 100% 10%, rgba(122, 199, 255, 0.14) 0, transparent 35%),
+        radial-gradient(circle at 100% 10%, rgba(132, 144, 101, 0.09) 0, transparent 35%),
         var(--fuwari-bg);
     }
 

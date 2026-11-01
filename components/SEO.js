@@ -5,6 +5,11 @@ import { createSiteUrl, normalizeSiteUrl } from '@/lib/sitemap-utils'
 import { isHttpLink, loadExternalResource } from '@/lib/utils'
 import { generateLocaleDict } from '@/lib/utils/lang'
 import Head from 'next/head'
+import {
+  getAuthorImage,
+  getPostCover,
+  SHARE_IMAGE
+} from '@/lib/site/presentation'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 
@@ -28,7 +33,8 @@ const SEO = props => {
   const meta = getSEOMeta(
     props,
     router,
-    globalLocale || generateLocaleDict(siteConfig('LANG', 'zh-CN', NOTION_CONFIG))
+    globalLocale ||
+      generateLocaleDict(siteConfig('LANG', 'zh-CN', NOTION_CONFIG))
   )
   const webFontUrl = siteConfig('FONT_URL')
   const hasWebFontUrl = Array.isArray(webFontUrl)
@@ -69,11 +75,19 @@ const SEO = props => {
   }
   if (meta) {
     url = createSiteUrl(url, meta.slug) || url
-    image = getAbsoluteImageUrl(meta.image || '/bg_image.jpg', LINK)
+    image = getAbsoluteImageUrl(
+      meta.type === 'Post'
+        ? getPostCover(post, true)
+        : siteConfig('OG_IMAGE', SHARE_IMAGE, NOTION_CONFIG),
+      LINK
+    )
   }
   const TITLE = siteConfig('TITLE')
-  const title = meta?.title || TITLE
-  const description = meta?.description || `${siteInfo?.description}`
+  const title = meta?.title || TITLE || siteInfo?.title || 'YANG 易'
+  const description =
+    meta?.description ||
+    siteInfo?.description ||
+    siteConfig('DESCRIPTION', '', NOTION_CONFIG)
   const type = meta?.type === 'Post' ? 'article' : meta?.type || 'website'
   const ENABLE_RSS = siteConfig('ENABLE_RSS')
   // 订阅文件的绝对地址，与 lib/utils/rss.js 的静态输出路径保持一致
@@ -84,8 +98,7 @@ const SEO = props => {
     rssSubPath ? `${LINK}/${rssSubPath}` : LINK,
     'rss/feed.xml'
   )
-  const language =
-    router?.locale || siteConfig('LANG', 'zh-CN', NOTION_CONFIG)
+  const language = router?.locale || siteConfig('LANG', 'zh-CN', NOTION_CONFIG)
   const lang = String(language).replace('-', '_') // Facebook OpenGraph 要 zh_CN 這樣的格式才抓得到語言
   const category = Array.isArray(meta?.category)
     ? meta?.category?.[0]
@@ -157,7 +170,10 @@ const SEO = props => {
         name='viewport'
         content='width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0'
       />
-      <meta name='robots' content='follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1' />
+      <meta
+        name='robots'
+        content='follow, index, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+      />
       <meta charSet='UTF-8' />
       <meta name='format-detection' content='telephone=no' />
       <meta name='mobile-web-app-capable' content='yes' />
@@ -254,7 +270,10 @@ const SEO = props => {
       {meta?.type === 'Post' && (
         <>
           {meta.publishTime && (
-            <meta property='article:published_time' content={meta.publishTime} />
+            <meta
+              property='article:published_time'
+              content={meta.publishTime}
+            />
           )}
           {meta.modifiedTime && (
             <meta
@@ -275,7 +294,7 @@ const SEO = props => {
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeStructuredData(
             generateStructuredData(
               meta,
               siteInfo,
@@ -291,13 +310,21 @@ const SEO = props => {
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeStructuredData(
             generatePersonStructuredData({
               author: AUTHOR,
               bio: BIO,
               siteUrl: LINK,
               siteTitle: siteInfo?.title,
-              image: getAbsoluteImageUrl(siteInfo?.icon, LINK)
+              image: getAbsoluteImageUrl(
+                getAuthorImage(
+                  siteConfig('AVATAR', siteInfo?.icon, NOTION_CONFIG)
+                ),
+                LINK
+              ),
+              sameAs: [siteConfig('CONTACT_GITHUB', '', NOTION_CONFIG)].filter(
+                Boolean
+              )
             })
           )
         }}
@@ -330,12 +357,14 @@ export const generatePersonStructuredData = ({
   bio,
   siteUrl,
   siteTitle,
-  image
+  image,
+  sameAs = []
 }) => {
   const name = author || 'YANG 易'
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
+    '@id': siteUrl ? `${siteUrl.replace(/\/$/, '')}/#author` : undefined,
     name,
     alternateName: ['YANG易', 'YANG 易', 'yannyi', 'YANNYI'],
     url: siteUrl,
@@ -344,8 +373,10 @@ export const generatePersonStructuredData = ({
     description:
       bio ||
       `${name}，个人博客 ${siteTitle || siteUrl} 作者，关注 AI、写作与个人成长。`,
-    mainEntityOfPage: siteUrl ? `${siteUrl.replace(/\/$/, '')}/about` : undefined,
-    sameAs: siteUrl ? [siteUrl] : []
+    mainEntityOfPage: siteUrl
+      ? `${siteUrl.replace(/\/$/, '')}/about`
+      : undefined,
+    sameAs: sameAs.filter(value => /^https?:\/\//.test(value))
   }
 }
 
@@ -369,6 +400,7 @@ export const generateStructuredData = (
 ) => {
   const person = {
     '@type': 'Person',
+    '@id': siteUrl ? `${siteUrl.replace(/\/$/, '')}/#author` : undefined,
     name: author,
     alternateName: ['YANG易', 'YANG 易', 'yannyi'],
     url: siteUrl,
@@ -387,7 +419,7 @@ export const generateStructuredData = (
       name: siteInfo?.title,
       logo: {
         '@type': 'ImageObject',
-        url: getAbsoluteImageUrl(siteInfo?.icon, siteUrl)
+        url: getAbsoluteImageUrl(getAuthorImage(siteInfo?.icon), siteUrl)
       }
     },
     potentialAction: {
@@ -414,7 +446,7 @@ export const generateStructuredData = (
         name: siteInfo?.title,
         logo: {
           '@type': 'ImageObject',
-          url: getAbsoluteImageUrl(siteInfo?.icon, siteUrl)
+          url: getAbsoluteImageUrl(getAuthorImage(siteInfo?.icon), siteUrl)
         }
       },
       mainEntityOfPage: {
@@ -458,6 +490,9 @@ const containsGoogleFontsUrl = fontUrl => {
   })
 }
 
+export const serializeStructuredData = value =>
+  JSON.stringify(value).replace(/</g, '\\u003c')
+
 const getAbsoluteImageUrl = (image, siteUrl) => {
   if (typeof image !== 'string') return ''
 
@@ -497,9 +532,10 @@ const getSEOMeta = (props, router, locale) => {
   switch (router.route) {
     case '/':
       return {
-        title: `${siteInfo?.title} | ${siteInfo?.description}`,
+        title: siteInfo?.title || TITLE || AUTHOR,
         description:
-          siteInfo?.description && String(siteInfo.description).trim().length >= 12
+          siteInfo?.description &&
+          String(siteInfo.description).trim().length >= 12
             ? siteInfo.description
             : `${AUTHOR}${BIO ? `，${BIO}` : ''}的个人博客。官方网站 yannyi.com。`,
         image: `${siteInfo?.pageCover}`,
@@ -617,8 +653,7 @@ const getSEOMeta = (props, router, locale) => {
         publishDay: post?.publishDay,
         lastEditedDay: post?.lastEditedDay,
         publishTime:
-          getIsoTime(post?.publishDate) ||
-          getIsoTime(post?.date?.start_date),
+          getIsoTime(post?.publishDate) || getIsoTime(post?.date?.start_date),
         modifiedTime: getIsoTime(post?.lastEditedTime || post?.lastEditedDate)
       }
   }

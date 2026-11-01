@@ -33,7 +33,11 @@ const Index = props => {
 export async function getStaticProps(req) {
   const { locale } = req
   const from = 'index'
-  const props = await fetchGlobalAllData({ from, locale })
+  const props = await fetchGlobalAllData({
+    from,
+    locale,
+    requireAvailableData: true
+  })
   if (process.env.NODE_ENV === 'development') {
     const configTheme = BLOG.THEME
     const notionTheme = props?.NOTION_CONFIG?.THEME || null
@@ -89,14 +93,22 @@ export async function getStaticProps(req) {
     const previewLimit = pLimit(
       siteConfig('POST_PREVIEW_CONCURRENCY', 5, props?.NOTION_CONFIG)
     )
-    const previewTargets = props.posts.filter(
-      post => !post.password || post.password === ''
-    ).slice(0, POST_PREVIEW_MAX_COUNT)
+    const previewTargets = props.posts
+      .filter(post => !post.password || post.password === '')
+      .slice(0, POST_PREVIEW_MAX_COUNT)
     await Promise.all(
       previewTargets.map(post =>
         previewLimit(async () => {
-          const rawBlockMap = await getPostBlocks(post.id, 'slug', POST_PREVIEW_LINES)
-          post.blockMap = getPublicPostBlockMap(post, adapterNotionBlockMap(rawBlockMap), props.allPages)
+          const rawBlockMap = await getPostBlocks(
+            post.id,
+            'slug',
+            POST_PREVIEW_LINES
+          )
+          post.blockMap = getPublicPostBlockMap(
+            post,
+            adapterNotionBlockMap(rawBlockMap),
+            props.allPages
+          )
           if (post.blockMap?.block) {
             post.blockMap.block = formatNotionBlock(post.blockMap.block)
           }

@@ -27,6 +27,7 @@ import SearchInput from './components/SearchInput'
 import SidePanel from './components/SidePanel'
 import CONFIG from './config'
 import { Style } from './style'
+import { getPostCover } from '@/lib/site/presentation'
 import { shouldShowFuwariComments } from './utils/commentEnabled'
 import { shouldHideFuwariSidebar } from './utils/sidebarVisibility'
 
@@ -37,7 +38,9 @@ const AlgoliaSearchModal = dynamic(
   { ssr: false }
 )
 const Lenis = dynamic(() => import('@/components/Lenis'), { ssr: false })
-const CursorDot = dynamic(() => import('@/components/CursorDot'), { ssr: false })
+const CursorDot = dynamic(() => import('@/components/CursorDot'), {
+  ssr: false
+})
 const getLocale = () => generateLocaleDict(siteConfig('LANG', 'zh-CN'))
 
 const shouldShowSidePanel = props => !shouldHideFuwariSidebar(props?.post)
@@ -56,7 +59,8 @@ const LayoutBase = props => {
   return (
     <div
       id='theme-fuwari'
-      className={`${siteConfig('FONT_STYLE')} fuwari-bg min-h-screen text-[var(--fuwari-text)]`}>
+      className={`${siteConfig('FONT_STYLE')} fuwari-bg min-h-screen text-[var(--fuwari-text)]`}
+    >
       <Style />
       <Header
         locale={locale}
@@ -69,13 +73,15 @@ const LayoutBase = props => {
       {showHomeHero && <HeroBanner siteInfo={props.siteInfo} />}
 
       <main
-        className={`max-w-6xl mx-auto px-3 md:px-4 pb-12 min-w-0 w-full ${showHomeHero ? 'fuwari-main-overlap' : ''}`}>
+        className={`max-w-6xl mx-auto px-3 md:px-4 pb-12 min-w-0 w-full ${showHomeHero ? 'fuwari-main-overlap' : ''}`}
+      >
         <div
           className={
             showSidePanel
               ? 'grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-4 lg:gap-6 items-start min-w-0'
               : 'min-w-0 w-full'
-          }>
+          }
+        >
           {showSidePanel && (
             <div className='hidden lg:block sticky top-4'>
               <SidePanel {...props} />
@@ -109,13 +115,19 @@ const LayoutPostList = props => {
       {(category || tag) && (
         <div className='fuwari-card p-5 mb-4'>
           <p className='text-sm uppercase tracking-widest text-[var(--fuwari-muted)] mb-2'>
-            {category ? (locale?.COMMON?.CATEGORY || '分类') : (locale?.COMMON?.TAGS || '标签')}
+            {category
+              ? locale?.COMMON?.CATEGORY || '分类'
+              : locale?.COMMON?.TAGS || '标签'}
           </p>
           <div className='flex items-center gap-2'>
             <h1 className='fuwari-section-title text-2xl font-bold'>
               {category || `#${tag}`}
             </h1>
-            <span className='fuwari-chip'>{category ? (locale?.COMMON?.CATEGORY || '分类') : (locale?.COMMON?.TAGS || '标签')}</span>
+            <span className='fuwari-chip'>
+              {category
+                ? locale?.COMMON?.CATEGORY || '分类'
+                : locale?.COMMON?.TAGS || '标签'}
+            </span>
           </div>
         </div>
       )}
@@ -138,7 +150,7 @@ const LayoutSlug = props => {
   const showComments = shouldShowFuwariComments({ post, lock })
   const articleCoverSrc =
     siteConfig('FUWARI_ARTICLE_COVER_HERO', true, CONFIG) &&
-    (post.pageCover || post.pageCoverThumbnail)
+    getPostCover(post, true)
   return (
     <>
       {lock ? (
@@ -151,14 +163,22 @@ const LayoutSlug = props => {
           <ArticleHeader post={post} />
           <div id='article-wrapper' className='fuwari-prose'>
             <NotionPage post={post} />
-            {siteConfig('FUWARI_ARTICLE_SHARE', true, CONFIG) && <ShareBar post={post} />}
+            {siteConfig('FUWARI_ARTICLE_SHARE', true, CONFIG) && (
+              <ShareBar post={post} />
+            )}
           </div>
           <ArticleCopyright post={post} />
           <ArticleAdjacent prev={prev} next={next} />
           {showComments && (
-            <section className='mt-8 pt-6 border-t border-[var(--fuwari-border)]' aria-label={locale?.COMMON?.COMMENTS || 'Comments'}>
+            <section
+              className='mt-8 pt-6 border-t border-[var(--fuwari-border)]'
+              aria-label={locale?.COMMON?.COMMENTS || 'Comments'}
+            >
               <h2 className='text-base font-semibold mb-4 text-[var(--fuwari-text)] flex items-center gap-2'>
-                <i className='far fa-comments text-[var(--fuwari-muted)]' aria-hidden='true' />
+                <i
+                  className='far fa-comments text-[var(--fuwari-muted)]'
+                  aria-hidden='true'
+                />
                 {locale?.COMMON?.COMMENTS || 'Comments'}
               </h2>
               <Comment frontMatter={post} className='fuwari-comment !mt-0' />
@@ -242,7 +262,9 @@ const LayoutArchive = props => {
         <p className='text-sm uppercase tracking-widest text-[var(--fuwari-muted)] mb-2'>
           {locale?.NAV?.ARCHIVE || '归档'}
         </p>
-        <h1 className='text-3xl font-bold leading-tight'>{locale?.NAV?.ARCHIVE || '归档'}</h1>
+        <h1 className='text-3xl font-bold leading-tight'>
+          {locale?.NAV?.ARCHIVE || '归档'}
+        </h1>
       </div>
       <ArchiveList archivePosts={props.archivePosts || {}} />
     </>
@@ -257,7 +279,9 @@ const Layout404 = () => {
       <p className='text-sm text-[var(--fuwari-muted)] mb-4'>
         {locale?.NAV?.['404'] || '页面不存在'}
       </p>
-      <SmartLink href='/' className='fuwari-link'>{locale?.NAV?.INDEX || '首页'}</SmartLink>
+      <SmartLink href='/' className='fuwari-link'>
+        {locale?.NAV?.INDEX || '首页'}
+      </SmartLink>
     </div>
   )
 }
@@ -267,13 +291,16 @@ const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
   return (
     <div className='fuwari-card p-5'>
-      <h2 className='fuwari-section-title text-2xl font-semibold mb-4'>{locale?.COMMON?.CATEGORY || '分类'}</h2>
+      <h2 className='fuwari-section-title text-2xl font-semibold mb-4'>
+        {locale?.COMMON?.CATEGORY || '分类'}
+      </h2>
       <div className='flex flex-wrap gap-2'>
         {(categoryOptions || []).map(c => (
           <SmartLink
             key={c.name}
             href={`/category/${encodeURIComponent(c.name)}`}
-            className='fuwari-chip'>
+            className='fuwari-chip'
+          >
             {c.name} {c.count ? `(${c.count})` : ''}
           </SmartLink>
         ))}
@@ -287,13 +314,16 @@ const LayoutTagIndex = props => {
   const { tagOptions } = props
   return (
     <div className='fuwari-card p-5'>
-      <h2 className='fuwari-section-title text-2xl font-semibold mb-4'>{locale?.COMMON?.TAGS || '标签'}</h2>
+      <h2 className='fuwari-section-title text-2xl font-semibold mb-4'>
+        {locale?.COMMON?.TAGS || '标签'}
+      </h2>
       <div className='flex flex-wrap gap-2'>
         {(tagOptions || []).map(t => (
           <SmartLink
             key={t.name}
             href={`/tag/${encodeURIComponent(t.name)}`}
-            className='fuwari-chip'>
+            className='fuwari-chip'
+          >
             #{t.name} {t.count ? `(${t.count})` : ''}
           </SmartLink>
         ))}
@@ -314,4 +344,3 @@ export {
   LayoutTagIndex,
   CONFIG as THEME_CONFIG
 }
-

@@ -3,6 +3,7 @@ import { siteConfig } from '@/lib/config'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import CONFIG from '../config'
+import { getFallbackCover, getPostCover } from '@/lib/site/presentation'
 
 const getCurrentSearchQuery = router => {
   const queryString = router?.asPath?.split('?')[1]?.split('#')[0] || ''
@@ -33,14 +34,20 @@ const PostCard = ({ post }) => {
   const router = useRouter()
   const coverColPx = Math.min(
     360,
-    Math.max(200, Number(siteConfig('FUWARI_POST_LIST_COVER_COL_WIDTH', 280, CONFIG)) || 280)
+    Math.max(
+      200,
+      Number(siteConfig('FUWARI_POST_LIST_COVER_COL_WIDTH', 280, CONFIG)) || 280
+    )
   )
-  const coverSrc =
-    post.pageCoverThumbnail ||
-    (siteConfig('FUWARI_POST_LIST_COVER_DEFAULT', false, CONFIG) &&
-      siteConfig('HOME_BANNER_IMAGE'))
+  const automatic = siteConfig('FUWARI_POST_LIST_COVER_DEFAULT', true, CONFIG)
+  const coverSrc = getPostCover(post, automatic)
   const [coverFailed, setCoverFailed] = useState(false)
-  const showCover = Boolean(coverSrc) && !coverFailed
+  const activeCover = coverFailed
+    ? automatic
+      ? getFallbackCover(post)
+      : ''
+    : coverSrc
+  const showCover = Boolean(activeCover)
   const showRail = !showCover
   const listCoverOn = siteConfig('FUWARI_POST_LIST_COVER', true, CONFIG)
   const showCoverBlock = listCoverOn && showCover
@@ -59,15 +66,22 @@ const PostCard = ({ post }) => {
     <article className='fuwari-card fuwari-card-hover p-4 relative w-full max-w-full min-w-0'>
       <div
         className={`fuwari-post-card-grid w-full min-w-0 md:grid md:gap-4 md:items-stretch min-h-[178px]`}
-        style={{ gridTemplateColumns }}>
+        style={{ gridTemplateColumns }}
+      >
         <div className='min-w-0 flex-1 md:pr-1'>
-          <h2 className='fuwari-post-title text-[2rem] font-bold mb-1.5 leading-tight'>
-            <SmartLink href={post.href || `/${post.slug}`} className='hover:opacity-90 transition-opacity'>
+          <h2 className='fuwari-post-title text-[1.45rem] md:text-[1.75rem] font-bold mb-1.5 leading-tight'>
+            <SmartLink
+              href={post.href || `/${post.slug}`}
+              className='hover:opacity-90 transition-opacity'
+            >
               {post.title}
             </SmartLink>
           </h2>
           <div className='fuwari-meta-row mb-2.5'>
-            <SmartLink href={getArchiveHref(post.publishDay, router)} className='fuwari-meta-item'>
+            <SmartLink
+              href={getArchiveHref(post.publishDay, router)}
+              className='fuwari-meta-item'
+            >
               <i className='far fa-calendar-alt fuwari-meta-icon' />
               <span className='fuwari-meta-text'>{post.publishDay}</span>
             </SmartLink>
@@ -76,7 +90,8 @@ const PostCard = ({ post }) => {
                 {post.category && (
                   <SmartLink
                     href={`/category/${encodeURIComponent(post.category)}`}
-                    className='fuwari-meta-item'>
+                    className='fuwari-meta-item'
+                  >
                     <i className='far fa-bookmark fuwari-meta-icon' />
                     <span className='fuwari-meta-text'>{post.category}</span>
                   </SmartLink>
@@ -85,7 +100,11 @@ const PostCard = ({ post }) => {
                   <span className='fuwari-meta-tags'>
                     <i className='fas fa-hashtag' />
                     {post.tagItems.slice(0, 3).map((tag, idx) => (
-                      <SmartLink key={tag.name} href={`/tag/${encodeURIComponent(tag.name)}`} className='hover:underline'>
+                      <SmartLink
+                        key={tag.name}
+                        href={`/tag/${encodeURIComponent(tag.name)}`}
+                        className='hover:underline'
+                      >
                         {idx > 0 ? ' / ' : ''}
                         {tag.name}
                       </SmartLink>
@@ -95,20 +114,24 @@ const PostCard = ({ post }) => {
               </>
             )}
           </div>
-          {siteConfig('FUWARI_POST_LIST_SUMMARY', true, CONFIG) && post.summary && (
-            <p className='text-sm leading-7 text-[var(--fuwari-muted)] fuwari-summary'>
-              {post.summary}
-            </p>
-          )}
+          {siteConfig('FUWARI_POST_LIST_SUMMARY', true, CONFIG) &&
+            post.summary && (
+              <p className='text-sm leading-7 text-[var(--fuwari-muted)] fuwari-summary'>
+                {post.summary}
+              </p>
+            )}
         </div>
         {showCoverBlock && (
           <div className='mt-4 md:mt-0'>
             <SmartLink href={post.href || `/${post.slug}`}>
               <div
-                className={`fuwari-cover-wrap h-full ${siteConfig('FUWARI_POST_LIST_COVER_HOVER_ENLARGE', true, CONFIG) ? 'fuwari-cover-enlarge' : ''}`}>
+                className={`fuwari-cover-wrap h-full ${siteConfig('FUWARI_POST_LIST_COVER_HOVER_ENLARGE', true, CONFIG) ? 'fuwari-cover-enlarge' : ''}`}
+              >
                 <img
-                  src={coverSrc}
+                  src={activeCover}
                   alt={post.title}
+                  loading='lazy'
+                  decoding='async'
                   className='w-full aspect-[2/1] max-h-52 md:aspect-auto md:max-h-none md:h-full md:min-h-[168px] object-cover rounded-2xl'
                   onError={() => setCoverFailed(true)}
                 />
@@ -117,7 +140,10 @@ const PostCard = ({ post }) => {
           </div>
         )}
         {showRail && (
-          <SmartLink href={post.href || `/${post.slug}`} className='hidden md:flex fuwari-readmore-rail'>
+          <SmartLink
+            href={post.href || `/${post.slug}`}
+            className='hidden md:flex fuwari-readmore-rail'
+          >
             <i className='fas fa-chevron-right' />
           </SmartLink>
         )}
@@ -137,4 +163,3 @@ const PostList = ({ posts = [] }) => {
 }
 
 export default PostList
-

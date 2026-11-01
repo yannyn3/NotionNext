@@ -3,8 +3,8 @@ import '@/styles/globals.css'
 import '@/styles/utility-patterns.css'
 
 // core styles shared by all of react-notion-x (required)
-import '@/styles/notion.css' //  重写部分notion样式
 import 'react-notion-x/src/styles.css' // 原版的react-notion-x
+import '@/styles/notion.css' //  重写部分notion样式
 
 import useAdjustStyle from '@/hooks/useAdjustStyle'
 import { GlobalContextProvider } from '@/lib/global'
@@ -18,6 +18,7 @@ import ErrorHandler from '@/lib/utils/errorHandler'
 import BLOG from '@/blog.config'
 import CrawlableFallback from '@/components/CrawlableFallback'
 import ExternalPlugins from '@/components/ExternalPlugins'
+import PWAInstaller from '@/components/PWAInstaller'
 import SEO from '@/components/SEO'
 import { zhCN } from '@clerk/localizations'
 import dynamic from 'next/dynamic'
@@ -26,10 +27,35 @@ const ClerkProvider = dynamic(() =>
   import('@clerk/nextjs').then(m => m.ClerkProvider)
 )
 const AppErrorBoundary = ErrorHandler.createErrorBoundary(
-  <div style={{ padding: '2rem', textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-    <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Something went wrong</h1>
-    <p style={{ color: '#666', marginBottom: '1.5rem' }}>An unexpected error occurred. Please refresh the page.</p>
-    <button onClick={() => window.location.reload()} style={{ padding: '0.5rem 1.5rem', cursor: 'pointer', border: '1px solid #ccc', borderRadius: '4px', background: 'transparent' }}>Refresh</button>
+  <div
+    style={{
+      padding: '2rem',
+      textAlign: 'center',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}
+  >
+    <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+      Something went wrong
+    </h1>
+    <p style={{ color: '#666', marginBottom: '1.5rem' }}>
+      An unexpected error occurred. Please refresh the page.
+    </p>
+    <button
+      onClick={() => window.location.reload()}
+      style={{
+        padding: '0.5rem 1.5rem',
+        cursor: 'pointer',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        background: 'transparent'
+      }}
+    >
+      Refresh
+    </button>
   </div>
 )
 // 主题层单独兜底：主题/Notion 渲染失败时不影响 SEO 与爬虫正文
@@ -99,6 +125,7 @@ const MyApp = ({ Component, pageProps }) => {
             <Component {...pageProps} />
           </GLayout>
         </ThemeErrorBoundary>
+        <PWAInstaller NOTION_CONFIG={pageProps?.NOTION_CONFIG} />
         <ExternalPlugins {...pageProps} />
       </GlobalContextProvider>
     </AppErrorBoundary>

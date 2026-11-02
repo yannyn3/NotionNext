@@ -50,5 +50,5 @@ it('keeps a provided cover, then falls back locally if it fails', () => {
   const img = screen.getByRole('img', { name: post.title })
   expect(img).toHaveAttribute('src', 'https://example.com/cover.jpg')
   fireEvent.error(img)
-  expect(img).toHaveAttribute('src', '/images/covers/life.webp')
+  expect(img).toHaveAttribute('src', '/images/photography/59.webp')
 })

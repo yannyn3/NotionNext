@@ -3,7 +3,8 @@ import { siteConfig } from '@/lib/config'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import CONFIG from '../config'
-import { getFallbackCover, getPostCover } from '@/lib/site/presentation'
+import { EMERGENCY_COVER } from '@/lib/site/presentation'
+import useCover from '@/lib/site/useCover'
 
 const getCurrentSearchQuery = router => {
   const queryString = router?.asPath?.split('?')[1]?.split('#')[0] || ''
@@ -40,11 +41,11 @@ const PostCard = ({ post }) => {
     )
   )
   const automatic = siteConfig('FUWARI_POST_LIST_COVER_DEFAULT', true, CONFIG)
-  const coverSrc = getPostCover(post, automatic)
+  const coverSrc = useCover(post, automatic)
   const [coverFailed, setCoverFailed] = useState(false)
   const activeCover = coverFailed
     ? automatic
-      ? getFallbackCover(post)
+      ? EMERGENCY_COVER
       : ''
     : coverSrc
   const showCover = Boolean(activeCover)

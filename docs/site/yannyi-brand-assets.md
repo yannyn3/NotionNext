@@ -2,7 +2,7 @@
 
 主色：陶土 #995b3d；背景：暖米色 #f7f2ea；卡片：#fdfaf5。深色模式使用暖灰与浅陶土。
 
-Notion 配置中心控制 TITLE、AUTHOR、BIO、AUTHOR_INTRO、AVATAR、OG_IMAGE、BLOG_FAVICON 和 FUWARI_COLOR_*。文章已有有效封面优先；缺图、退役的 source.unsplash.com 地址或加载失败时，Fuwari 使用站内分类插图。该功能是自动匹配已生成图片，不会为每篇文章自动调用付费生成服务。
+Notion 配置中心控制 TITLE、AUTHOR、BIO、AUTHOR_INTRO、AVATAR、OG_IMAGE、BLOG_FAVICON 和 FUWARI_COLOR_*。文章已有有效封面优先；未设置或旧服务失效时，每次完整打开页面会从站内真实摄影图库随机选图，同一次浏览保持稳定。加载失败时回退本地备用图。摄影来源 Picsum/Unsplash，详见 photography-credits.json。不会调用付费图片生成服务。
 
 ## 本地素材
 
@@ -29,4 +29,4 @@ Subjects:
 
 站点输出规范链接、Open Graph、Person/WebSite/BlogPosting/ProfilePage JSON-LD、robots.txt、sitemap.xml、RSS 和 llms.txt。这些帮助访问与理解内容，不保证收录、排名或 AI 引用。Google 验证码只能使用 Search Console 签发的实际值。
 
-现有文章网址和真实日期应保持稳定；缺失日期需作者核实。GitHub main 触发 Vercel 生产部署；上游同步工作流每日 08:00（上海）执行。
+现有文章网址和真实日期应保持稳定；缺失日期需作者核实。GitHub main 触发 Vercel 生产部署；上游同步每日 08:00（上海）准备待审核更新，不直接改 main；备份与恢复见 recovery.md。

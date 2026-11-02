@@ -1,41 +1,72 @@
 name: Upstream Sync
-
-permissions:
-  contents: write
-
 on:
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
-
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: reviewed-upstream-sync
+  cancel-in-progress: false
 jobs:
-  sync_latest_from_upstream:
-    name: Sync latest commits from upstream repo
+  prepare-update:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     if: ${{ github.event.repository.fork }}
-
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UPDATE_BRANCH: codex/upstream-update
     steps:
-      # Step 1: run a standard checkout action
-      - name: Checkout target repo
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
+          ref: main
           fetch-depth: 0
-
-      # Step 2: run the sync action
-      - name: Sync upstream changes
-        id: sync
-        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
-        with:
-          upstream_sync_repo: notionnext-org/NotionNext
-          upstream_sync_branch: main
-          target_sync_branch: main
-          target_repo_token: ${{ secrets.GITHUB_TOKEN }} # automatically generated, no need to set
-
-          # Set test_mode true to run tests instead of the true action!!
-          test_mode: false
-
-      - name: Sync check
-        if: failure()
+      - name: Check for a pending update
+        id: pending
         run: |
-          echo "[Error] 同步失败，请查看 Sync upstream changes 日志；代码冲突需手动合并，workflow 权限错误需手动 Sync Fork。"
-          exit 1
+          count=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$UPDATE_BRANCH" --state open --json number --jq 'length')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+      - name: Prepare merge without changing production
+        id: merge
+        if: steps.pending.outputs.count == '0'
+        run: |
+          git fetch https://github.com/notionnext-org/NotionNext.git main
+          if git merge-base --is-ancestor FETCH_HEAD HEAD; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$UPDATE_BRANCH"
+          git merge --no-edit FETCH_HEAD
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v7
+        if: steps.merge.outputs.changed == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - name: Validate proposed update
+        if: steps.merge.outputs.changed == 'true'
+        env:
+          NOTION_PAGE_ID: bb79b4f17450416bad4fe01b249cb529
+        run: |
+          yarn install --frozen-lockfile
+          yarn lint
+          yarn type-check
+          yarn test --runInBand
+          yarn build
+      - name: Publish reviewed update branch
+        if: steps.merge.outputs.changed == 'true'
+        run: git push --force-with-lease origin "HEAD:refs/heads/$UPDATE_BRANCH"
+      - name: Open update for review
+        if: steps.merge.outputs.changed == 'true'
+        run: |
+          cat > /tmp/upstream-pr.md <<'BODY'
+          New upstream changes have passed lint, type checking, unit tests and the production build.
+
+          Production main has not changed. Inspect the preview and merge conflicts before merging this update. Do not enable automatic merging.
+
+          Changes created with GITHUB_TOKEN may not trigger additional workflows. Validation is therefore performed in this sync run. If repository policy blocks PR creation, open a PR manually from codex/upstream-update.
+          BODY
+          gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$UPDATE_BRANCH" --title 'chore: review upstream NotionNext update' --body-file /tmp/upstream-pr.md

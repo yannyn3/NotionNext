@@ -188,6 +188,15 @@ const SEO = props => {
         </>
       )}
 
+      {/^ca-pub-\d{16}$/.test(
+        String(siteConfig('ADSENSE_GOOGLE_ID', '', NOTION_CONFIG))
+      ) && (
+        <meta
+          name='google-adsense-account'
+          content={siteConfig('ADSENSE_GOOGLE_ID', '', NOTION_CONFIG)}
+        />
+      )}
+
       {/* 搜索引擎验证 */}
       {SEO_GOOGLE_SITE_VERIFICATION && (
         <meta

@@ -20,7 +20,7 @@ it('automatically gives an article without a cover an appropriate local image', 
   render(<PostList posts={[post]} />)
   expect(screen.getByRole('img', { name: post.title })).toHaveAttribute(
     'src',
-    '/images/covers/technology.webp'
+    expect.stringMatching(/^\/images\/photography\/\d+\.webp$/)
   )
 })
 
@@ -37,7 +37,7 @@ it('replaces retired random-image URLs with a local cover', () => {
   )
   expect(screen.getByRole('img', { name: post.title })).toHaveAttribute(
     'src',
-    '/images/covers/technology.webp'
+    expect.stringMatching(/^\/images\/photography\/\d+\.webp$/)
   )
 })
 
@@ -50,5 +50,5 @@ it('keeps a provided cover, then falls back locally if it fails', () => {
   const img = screen.getByRole('img', { name: post.title })
   expect(img).toHaveAttribute('src', 'https://example.com/cover.jpg')
   fireEvent.error(img)
-  expect(img).toHaveAttribute('src', '/images/covers/technology.webp')
+  expect(img).toHaveAttribute('src', '/images/covers/life.webp')
 })

@@ -8,6 +8,7 @@
 - [全部文章](https://yannyi.com/archive): 按时间浏览公开文章。
 - [文章分类](https://yannyi.com/category): 按主题查找内容。
 - [项目合集](https://yannyi.com/projects): 个人项目与作品。
+- [隐私与广告说明](https://yannyi.com/privacy): 数据处理、Cookie 和广告说明。
 - [RSS](https://yannyi.com/rss/feed.xml): 文章订阅源。
 - [站点地图](https://yannyi.com/sitemap.xml): 公开页面的规范地址。
 - [GitHub](https://github.com/yannyn3): 作者公开代码与项目。

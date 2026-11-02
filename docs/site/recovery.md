@@ -12,7 +12,7 @@ GitHub 的 GITHUB_TOKEN 创建的 PR 检查可能需要人工批准运行，因�
 
 ## 备份
 
-- Blog backup：每日 08:30（上海）保存完整 main 历史 Git bundle、已发布网站 HTML、RSS、地图和本站图片/脚本等静态资源。结果位于 GitHub Actions 的 Artifacts，保留 90 天；Actions 定时执行可能延迟。
+- Blog backup：每日 08:30（上海）保存 main 的可部署源码压缩包（排除上游 docs/public 说明文档图片，不排除网站 public 素材）、已发布网站 HTML、RSS、地图和本站图片/脚本等静态资源。结果位于 GitHub Actions 的 Artifacts，保留 7 天；Actions 定时执行可能延迟。
 - 2026-11-02 的独立副本位于作者 iCloud 笔记库“博客备份/2026-11-02”，包含通过验证的 NotionNext.bundle、56 个 Notion 已发布文章/页面/公告文本及网站快照。它不在公开仓库内。
 - 网站快照是公开内容的归档，不包含草稿、登录权限、支付资料或 Vercel 密钥；第三方远程媒体、Notion 附件二进制和 Notion 原生数据库视图并不构成完整导出。建议每月在 Notion 导出一次整个博客数据库（Markdown/CSV 并包含子页面和附件），存入个人云盘。
 - Artifacts 在同一个 GitHub 账号内，不能替代异地副本。每月下载一份到个人云盘；重要改版前另留 Git 分支/标签和 Vercel 已成功部署记录。
@@ -26,7 +26,7 @@ Blog availability 每小时检查首页、站点地图、公开文章、关于�
 
 1. 更新代码后出错：在 Vercel Deployments 中找到上一条已成功的 Production 部署，使用 Instant Rollback；随后在 GitHub 撤回故障提交。回滚不会恢复 Notion 内容更改，Notion 配置需要单独恢复。
 2. 上游项目改名、停更或删除：自己的 fork/代码副本仍可部署，现有网站不会因为上游消失自动删除。停止上游更新，继续维护自己的 main；后续迁移时保留域名和文章 URL。
-3. 自己的 GitHub 仓库丢失：独立副本用 `git clone -b main NotionNext.bundle NotionNext`，Actions 副本用 `git clone -b backup-main NotionNext.bundle NotionNext`，然后在克隆目录执行 `git branch -M main`；新建仓库并推送 main，再把 Vercel 项目连接到新仓库。核对 NOTION_PAGE_ID、域名与环境变量。
+3. 自己的 GitHub 仓库丢失：独立副本用 `git clone -b main NotionNext.bundle NotionNext`。Actions 源码副本先解压 `source.tar.gz` 到空目录，再 `git init -b main` 并提交一次；它不含 Git 历史或上游说明文档图片，网站素材与构建代码均保留。；新建仓库并推送 main，再把 Vercel 项目连接到新仓库。核对 NOTION_PAGE_ID、域名与环境变量。
 4. Notion 临时中断：首页与关于页生成失败会抛错，保留已有静态版本；缓存未命中的文章仍可能受影响。等待服务恢复后重试。不要为了恢复访问把整个数据库改成公开或删除数据。
 5. Notion 内容误删：先用 Notion 页面历史或回收站恢复；仍无法恢复时，用独立 Markdown/CSV/附件备份导入，核对 slug、category、status 与日期。
 6. 验证恢复：运行 `python3 scripts/site-snapshot.py --origin https://yannyi.com`；核对文章总数、旧网址、站名、封面、站点地图和 RSS。首次恢复后先用 Vercel Preview 测试再绑定正式域名。

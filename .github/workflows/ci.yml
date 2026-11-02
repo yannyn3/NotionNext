@@ -36,6 +36,7 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn test --passWithNoTests
+      - run: python3 -m unittest discover -s scripts/tests
 
   lockfile:
     name: Lockfile consistency

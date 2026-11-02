@@ -1,0 +1,23 @@
+name: Blog availability
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/site-health.yml'
+      - 'scripts/site-snapshot.py'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: blog-availability
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check homepage, articles, sitemap and feeds
+        run: python3 scripts/site-snapshot.py

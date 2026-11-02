@@ -50,7 +50,19 @@ function generateLocalesSitemap(link, allPages, locale) {
 
   const defaultFields = [
     {
-      loc: buildSitemapLoc({ baseUrl: normalizedLink, locale: normalizedLocale }),
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale,
+        slug: 'privacy'
+      }),
+      changefreq: 'monthly',
+      priority: '0.2'
+    },
+    {
+      loc: buildSitemapLoc({
+        baseUrl: normalizedLink,
+        locale: normalizedLocale
+      }),
       lastmod: dateNow,
       changefreq: 'daily',
       priority: '0.7'
@@ -121,7 +133,9 @@ function generateLocalesSitemap(link, allPages, locale) {
     allPages
       ?.filter(p => p.status === BLOG.NOTION_PROPERTY_NAME.status_publish)
       // 过滤掉外部链接(http开头)和锚点链接(#开头)
-      ?.filter(p => p.slug && !p.slug.startsWith('http') && !p.slug.startsWith('#'))
+      ?.filter(
+        p => p.slug && !p.slug.startsWith('http') && !p.slug.startsWith('#')
+      )
       // 过滤空格/异常 slug，避免 sitemap 含坏链降低抓取质量
       ?.filter(p => {
         const s = String(p.slug || '')
@@ -160,7 +174,10 @@ function getUniqueFields(fields) {
   fields.forEach(field => {
     const existingField = uniqueFieldsMap.get(field.loc)
 
-    if (!existingField || new Date(field.lastmod) > new Date(existingField.lastmod)) {
+    if (
+      !existingField ||
+      new Date(field.lastmod) > new Date(existingField.lastmod)
+    ) {
       uniqueFieldsMap.set(field.loc, field)
     }
   })
@@ -168,4 +185,4 @@ function getUniqueFields(fields) {
   return Array.from(uniqueFieldsMap.values())
 }
 
-export default () => { }
+export default () => {}

@@ -1,0 +1,38 @@
+name: Blog backup
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/site-backup.yml'
+      - 'scripts/site-snapshot.py'
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: blog-backup
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Back up deployable source
+        run: |
+          mkdir -p backup
+          git archive --format=tar.gz -o backup/source.tar.gz HEAD . ":!docs/public"
+          tar -tzf backup/source.tar.gz > backup/source-files.txt
+          git rev-parse HEAD > backup/commit.txt
+      - name: Save published pages and site assets
+        run: python3 scripts/site-snapshot.py --output backup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yang-yi-backup-${{ github.run_id }}
+          path: backup/
+          retention-days: 7
+          if-no-files-found: error

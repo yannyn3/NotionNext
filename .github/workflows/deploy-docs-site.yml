@@ -24,6 +24,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ !github.event.repository.fork || vars.DEPLOY_DOCS_SITE == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
